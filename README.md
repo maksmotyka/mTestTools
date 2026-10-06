@@ -36,7 +36,26 @@ Przeglądarka rysuje w 8-bitowym RGB w pełnym zakresie. Poziomy z norm są prze
 | **Identyfikacja EBU** | `audio=ebu` | Ton na obu kanałach, lewy przerywany na 250 ms co 3 s (EBU Tech 3304). |
 | **Identyfikacja GLITS** | `audio=glits` | System BBC: lewy kanał przerywany raz, prawy dwukrotnie (250 ms przerwy, 250 ms odstępu) w cyklu 4 s – identyfikuje oba kanały. |
 | **Szum różowy** | `audio=pink` | Szum różowy kalibrowany wartością skuteczną (RMS) – odsłuch, zestrojenie głośników, kontrola fazy. |
+| **Automatyczny test stereo** | `audio=stereo` | Sekwencja tonu i szumu: L, P, L+P w fazie, L+P w przeciwfazie – z miernikami, korelacją i goniometrem (patrz niżej). |
 | **Synchronizacja A/V** | `audio=sync` | Piki tonu zsynchronizowane z grafiką (patrz niżej). |
+
+### Automatyczny test stereo
+Wzorowany na dawnych planszach testu stereofonicznego TVP. W pętli odtwarzane są kolejno poniższe kroki. Każdy krok to sygnał (domyślnie 3,5 s) i przerwa (domyślnie 0,5 s) – oba czasy ustawia się w panelu opcji (sekcja **Test stereo**) lub parametrami `stsig=` i `stpause=`:
+
+| | 1 | 2 | 3 | 4 | 5 |
+|---|---|---|---|---|---|
+| **Ton** (wybrana częstotliwość) | tylko L | tylko P | L+P w fazie | L+P w przeciwfazie | |
+| **Szum różowy** | tylko L | tylko P | L+P w fazie | L+P w przeciwfazie | L i P nieskorelowane |
+
+W ostatnim kroku w lewym i prawym kanale grają dwa **niezależne** szumy – korelacja wynosi 0 (90°), a goniometr pokazuje okrągłą „chmurę”. (Zsumowanie szumu w fazie i w przeciwfazie nie da tego efektu: lewy kanał dostałby 2× szum, a prawy by zaniknął.)
+
+Na planszy pojawia się panel z:
+- **miernikami L / P** – wartość szczytowa w dBFS z szybkim opadaniem (60 dB/s – wskazanie gaśnie w przerwie między krokami) i podtrzymaniem szczytu, strefy: do −18 dBFS (poziom odniesienia EBU R 68) zielona, do −9 dBFS (maks. wg EBU R 68) żółta, powyżej czerwona; obok odczyt liczbowy szczytu i wartości skutecznej (RMS),
+- **miernikiem korelacji** −1…+1 (180° / 90° / 0°): +1 – sygnał mono, 0 – sygnał tylko w jednym kanale lub kanały niezależne, −1 – przeciwfaza (po zsumowaniu do mono sygnał zaniknie),
+- **goniometrem** – obrazem „przestrzeni” stereo: pion to suma M (L+P), poziom to różnica S (L−P); sam lewy kanał daje przekątną `\`, sam prawy `/`, sygnał w fazie – linię pionową, przeciwfaza – poziomą; okrąg oznacza poziom odniesienia −18 dBFS,
+- **nazwą bieżącego kroku** i listą wszystkich kroków.
+
+Mierniki, korelacja i goniometr mierzą **faktycznie generowany sygnał** (przed wyciszeniem klawiszem M), więc pokazują to samo, co powinien pokazać miernik na wejściu toru. Ton ma szczyt i RMS −18 dBFS. Szum kalibrowany jest wartością skuteczną (−18 dBFS RMS), a ze względu na przypadkowy charakter jego szczyty leżą 7–8 dB wyżej – na mierniku szczytowym (PPM) sięga ok. −11 dBFS, na mierniku RMS / VU pokazuje −18. To prawidłowe zachowanie.
 
 ### Wskaźnik identyfikacji kanałów
 Przy identyfikacji EBU i GLITS na planszy pojawia się obrotowy wskaźnik (`ind=corner` – w prawym dolnym rogu, `ind=center` – na środku, `ind=off` – wyłączony):
@@ -133,15 +152,17 @@ Parametry nadpisują ustawienia zapisane w przeglądarce.
 | `idmode` | `text`, `logo`, `both` – co pokazywać jako identyfikator | `text` |
 | `clock` | `1` / `0` – zegar | `0` |
 | `info` | `1` / `0` – opis sygnału audio | `1` |
-| `audio` | `off`, `tone`, `ebu`, `glits`, `pink`, `sync` | `off` |
+| `audio` | `off`, `tone`, `ebu`, `glits`, `pink`, `stereo`, `sync` | `off` |
 | `freq` | częstotliwość [Hz], 20–20000 | `1000` |
 | `level` | poziom [dBFS], −60…0 | `-18` |
 | `ch` | `lr`, `l`, `r`, `anti` | `lr` |
 | `period` | okres pików synchronizacji [s], 1–10 | `2` |
 | `dur` | długość tonu synchronizacji [ms] (maks. połowa okresu) | `200` |
-| `offset` | korekta grafiki synchronizacji i wskaźnika identyfikacji [ms], −2000…2000 | `0` |
+| `offset` | korekta grafiki synchronizacji, wskaźnika identyfikacji i testu stereo [ms], −2000…2000 | `0` |
 | `flash` | `box` (pole na tarczy), `screen` (cały ekran) | `box` |
 | `ind` | wskaźnik identyfikacji EBU / GLITS: `corner`, `center`, `off` | `corner` |
+| `stsig` | test stereo: czas sygnału w kroku [s], 0,5–30 | `3.5` |
+| `stpause` | test stereo: przerwa między krokami [s], 0–10 | `0.5` |
 | `kiosk` | `1` – ukrywa przycisk opcji i podpowiedzi | – |
 
 Przykład – pasy EBU z identyfikacją kanałów EBU i podpisem źródła:
@@ -174,6 +195,7 @@ mTestTools/
     ├── audio-engine.js           # Tony, identyfikacja kanałów, szum, piki, zegar audio
     ├── av-sync.js                # Grafika synchronizacji A/V
     ├── ident-indicator.js        # Obrotowy wskaźnik identyfikacji EBU / GLITS
+    ├── stereo-test.js            # Automatyczny test stereo: mierniki, korelacja, goniometr
     ├── overlay.js                # Identyfikator, zegar, opis sygnału
     └── patterns/
         ├── pattern-utils.js      # Przeliczanie poziomów, rysowanie pól

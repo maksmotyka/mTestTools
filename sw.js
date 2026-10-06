@@ -29,6 +29,7 @@ const APP_FILES = [
     'js/audio-engine.js',
     'js/av-sync.js',
     'js/ident-indicator.js',
+    'js/stereo-test.js',
     'js/overlay.js',
     'js/app.js'
 ];

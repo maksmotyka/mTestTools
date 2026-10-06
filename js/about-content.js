@@ -4,7 +4,7 @@
 // =============================================================================
 
 window.ABOUT_CONTENT = {
-  version: '1.0.2',
+  version: '1.1.0',
   about: {
     description: 'Przeglądarkowy generator plansz testowych i sygnałów fonicznych dla realizacji wizji i dźwięku. Może służyć jako źródło w OBS / vMix (Browser Source) lub działać na fizycznym urządzeniu (np. iPadzie) filmowanym przez kamerę. Zawiera generator sygnału synchronizacji obrazu i dźwięku (lip-sync).',
     copyright: '© Maksymilian Motyka 2026'
@@ -42,6 +42,7 @@ window.ABOUT_CONTENT = {
   features: [
     'Ton kontrolny 1 kHz / 997 Hz na poziomie −18 dBFS (EBU R 68) lub −20 dBFS (SMPTE RP 155)',
     'Identyfikacja kanałów: EBU (Tech 3304) i GLITS z obrotowym wskaźnikiem przerw na planszy (?ind=), ton w antyfazie, szum różowy',
+    'Automatyczny test stereo: ton i szum w L, P, L+P w fazie i przeciwfazie oraz szum nieskorelowany, z miernikami poziomu (szczyt i RMS), korelacji i goniometrem',
     'Synchronizacja A/V: piki dźwiękowe z błyskiem, zbieżnymi znacznikami i licznikiem ms / klatek',
     'Tolerancje lip-sync: EBU R 37, ITU-R BT.1359, ATSC IS-191',
     'Identyfikator źródła: tekst, logo (z czarnym tłem dla obrazów z przezroczystością) lub logo z tekstem (?logo=, ?idmode=)',
@@ -55,9 +56,15 @@ window.ABOUT_CONTENT = {
   ],
   changelog: [
     {
+      version: '1.1.0',
+      items: [
+        'Dodanie nowego testu audio: Automatyczny test stereo z miernikami poziomu (szczyt i RMS), korelacji i goniometrem',
+      ]
+    },
+    {
       version: '1.0.1',
       items: [
-        '(1.0.0) Pierwsze wydanie: 7 plansz testowych, identyfikator źródła z tekstem i/lub logo, generator tonów kontrolnych i identyfikacji kanałów (z obrotowym wskaźnikiem przerw), sygnał synchronizacji obrazu i dźwięku.',
+        '(1.0.0) Pierwsze wydanie: 7 plansz testowych, identyfikator źródła z tekstem i/lub logo, generator tonów kontrolnych i identyfikacji kanałów (z obrotowym wskaźnikiem przerw), automatyczny test stereo, sygnał synchronizacji obrazu i dźwięku.',
         'Poprawa drobnych usterek, dodanie częstotliwości tonu 442 Hz.',
         'Poprawienie wyświetlania aplikacji na iOS'
       ]

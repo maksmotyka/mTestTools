@@ -26,7 +26,9 @@ class AudioEngine {
             level: -18,
             channels: 'lr',
             syncPeriod: 2,
-            syncDuration: 200
+            syncDuration: 200,
+            stereoSignal: 3.5,      // test stereo: czas sygnału w kroku [s]
+            stereoPause: 0.5        // test stereo: przerwa po sygnale [s]
         };
 
         // Odwzorowanie czasu przeglądarki -> czas AudioContext słyszany w głośniku
@@ -49,6 +51,22 @@ class AudioEngine {
         this.merger = this.ctx.createChannelMerger(2);
         this.merger.connect(this.master);
         this.master.connect(this.ctx.destination);
+
+        // Pomiar generowanego sygnału (mierniki, korelacja, goniometr) - przed wyciszeniem.
+        // Analizatory podłączone do wyjścia przez zerowe wzmocnienie, żeby były przetwarzane.
+        const splitter = this.ctx.createChannelSplitter(2);
+        const sink = this.ctx.createGain();
+        sink.gain.value = 0;
+        this.merger.connect(splitter);
+        this.analysers = [0, 1].map(ch => {
+            const an = this.ctx.createAnalyser();
+            an.fftSize = 2048;
+            splitter.connect(an, ch);
+            an.connect(sink);
+            return an;
+        });
+        sink.connect(this.ctx.destination);
+        this.analyserData = this.analysers.map(an => new Float32Array(an.fftSize));
 
         this.ctx.addEventListener?.('statechange', () => {
             this.clockOffset = null;
@@ -155,6 +173,37 @@ class AudioEngine {
                     this.gate(gains[gap.ch].gain, a, t + gap.start, t + gap.start + gap.dur);
                 }
             });
+        } else if (mode === 'stereo') {
+            // Ton i szum, każdy z osobnymi wzmocnieniami L/P przełączanymi wg tabeli kroków
+            const tone = this.connectStereo(this.createOscillator(), [0, 0]);
+            const noiseSource = (key) => {
+                const src = this.ctx.createBufferSource();
+                src.buffer = this.pinkNoiseBuffer(key);
+                src.loop = true;
+                src.start();
+                this.nodes.push(src);
+                return this.connectStereo(src, [0, 0]);
+            };
+            const noise = noiseSource('a');
+            // Drugi, niezależny szum - prawy kanał w kroku nieskorelowanym
+            const noiseB = noiseSource('b');
+            const test = this.stereoTiming();
+            const set = (g, value, t) => g.gain.setTargetAtTime(value, t, 0.002);
+            // Długi cykl - planowanie od bieżącego kroku, a nie od następnego cyklu
+            this.startScheduler(test.cycle, (t) => {
+                const now = this.ctx.currentTime;
+                test.steps.forEach((step, i) => {
+                    const t0 = Math.max(now, t + i * test.stepDur);
+                    const t1 = t + i * test.stepDur + test.signal;
+                    if (t1 <= now) return;
+                    const l = (step.src === 'tone' ? tone : noise)[0];
+                    const r = step.src === 'tone' ? tone[1] : (step.decorrelated ? noiseB : noise)[1];
+                    set(l, step.l * a, t0);
+                    set(r, step.r * a, t0);
+                    set(l, 0, t1);
+                    set(r, 0, t1);
+                });
+            }, true);
         } else if (mode === 'sync') {
             const gate = this.ctx.createGain();
             gate.gain.value = 0;
@@ -180,9 +229,13 @@ class AudioEngine {
         param.linearRampToValueAtTime(a, tOn + this.RAMP);
     }
 
-    // Zdarzenia co `period` sekund, wyrównane do wielokrotności okresu zegara audio
-    startScheduler(period, scheduleAt) {
-        this.nextEventTime = Math.ceil((this.ctx.currentTime + 0.05) / period) * period;
+    // Zdarzenia co `period` sekund, wyrównane do wielokrotności okresu zegara audio.
+    // fromCurrent - zacznij od bieżącego (już trwającego) cyklu; scheduleAt musi wtedy
+    // pominąć zdarzenia z przeszłości
+    startScheduler(period, scheduleAt, fromCurrent = false) {
+        this.nextEventTime = fromCurrent
+            ? Math.floor(this.ctx.currentTime / period) * period
+            : Math.ceil((this.ctx.currentTime + 0.05) / period) * period;
         const tick = () => {
             while (this.nextEventTime < this.ctx.currentTime + this.LOOKAHEAD) {
                 scheduleAt(this.nextEventTime);
@@ -193,10 +246,13 @@ class AudioEngine {
         this.scheduler = setInterval(tick, 50);
     }
 
-    // Szum różowy (filtr Paula Kelleta), 10 s w pętli, RMS = sinus pełnej skali
-    pinkNoiseBuffer() {
-        if (this.pinkBuffer && this.pinkBuffer.sampleRate === this.ctx.sampleRate) {
-            return this.pinkBuffer;
+    // Szum różowy (filtr Paula Kelleta), 10 s w pętli, RMS = sinus pełnej skali.
+    // Różne klucze dają niezależne (nieskorelowane) realizacje szumu.
+    pinkNoiseBuffer(key = 'a') {
+        this.pinkBuffers = this.pinkBuffers || {};
+        const cached = this.pinkBuffers[key];
+        if (cached && cached.sampleRate === this.ctx.sampleRate) {
+            return cached;
         }
         const length = this.ctx.sampleRate * 10;
         const buffer = this.ctx.createBuffer(1, length, this.ctx.sampleRate);
@@ -218,7 +274,7 @@ class AudioEngine {
         }
         const scale = Math.SQRT1_2 / Math.sqrt(sumSq / length);
         for (let i = 0; i < length; i++) data[i] *= scale;
-        this.pinkBuffer = buffer;
+        this.pinkBuffers[key] = buffer;
         return buffer;
     }
 
@@ -258,6 +314,32 @@ class AudioEngine {
         return perfMs / 1000 + this.clockOffset;
     }
 
+    // Kroki i czasy automatycznego testu stereo dla bieżących ustawień
+    stereoTiming() {
+        const signal = this.config.stereoSignal;
+        const pause = this.config.stereoPause;
+        const steps = AudioEngine.STEREO_TEST.steps;
+        return { steps, signal, pause, stepDur: signal + pause, cycle: steps.length * (signal + pause) };
+    }
+
+    // Ostatnie próbki generowanego sygnału [L, P] (null bez Web Audio).
+    // Kanały odczytywane są osobno - jeśli między odczytami wątek audio przetworzył
+    // kolejny blok, okna L i P byłyby przesunięte (zaniżona korelacja), więc odczyt
+    // jest powtarzany, aż lewy kanał nie zmieni się w trakcie.
+    getSamples() {
+        if (!this.analysers) return null;
+        const [L, R] = this.analyserData;
+        this.checkData = this.checkData || new Float32Array(L.length);
+        for (let attempt = 0; attempt < 4; attempt++) {
+            this.analysers[0].getFloatTimeDomainData(L);
+            this.analysers[1].getFloatTimeDomainData(R);
+            this.analysers[0].getFloatTimeDomainData(this.checkData);
+            const last = L.length - 1;
+            if (L[last] === this.checkData[last] && L[0] === this.checkData[0]) break;
+        }
+        return this.analyserData;
+    }
+
     latencyInfo() {
         if (!this.ctx) return null;
         return {
@@ -280,6 +362,7 @@ class AudioEngine {
             case 'ebu': return `EBU IDENT  ${f}  ${lvl}`;
             case 'glits': return `GLITS  ${f}  ${lvl}`;
             case 'pink': return `SZUM RÓŻOWY  ${lvl} RMS  ${ch}`;
+            case 'stereo': return `AUTOMATYCZNY TEST STEREO  ${f}  ${lvl}`;
             case 'sync': return `A/V SYNC  ${f}  ${lvl}  ${c.syncDuration} ms / ${c.syncPeriod} s`;
             default: return '';
         }
@@ -307,5 +390,21 @@ AudioEngine.IDENTS = {
         ]
     }
 };
+
+// Automatyczny test stereo - kolejne kroki: sygnał (stereoSignal s), potem cisza
+// (stereoPause s) - patrz stereoTiming(). Wartości l / r: 1 - sygnał, 0 - cisza, -1 - odwrócona faza.
+// Szum różowy to jeden sygnał mono - w kroku L+P oba kanały są identyczne (korelacja +1).
+// Ostatni krok: w L i P dwa niezależne szumy - korelacja 0 (90°), szeroki obraz stereo.
+AudioEngine.STEREO_TEST = (() => {
+    const variants = [
+        { l: 1, r: 0, label: 'L', name: 'KANAŁ LEWY' },
+        { l: 0, r: 1, label: 'P', name: 'KANAŁ PRAWY' },
+        { l: 1, r: 1, label: 'L+P', name: 'L + P W FAZIE' },
+        { l: 1, r: -1, label: 'L−P', name: 'L + P W PRZECIWFAZIE' }
+    ];
+    const steps = ['tone', 'noise'].flatMap(src => variants.map(v => ({ src, ...v })));
+    steps.push({ src: 'noise', l: 1, r: 1, decorrelated: true, label: 'L≠P', name: 'L I P NIESKORELOWANE' });
+    return { steps };
+})();
 
 window.AudioEngine = AudioEngine;

@@ -20,7 +20,7 @@ class TestToolsApp {
             identMode: { def: 'text', url: 'idmode', valid: oneOf('text', 'logo', 'both') },
             clock: { def: false, url: 'clock', type: 'bool' },
             audioInfo: { def: true, url: 'info', type: 'bool' },
-            audio: { def: 'off', url: 'audio', valid: oneOf('off', 'tone', 'ebu', 'glits', 'pink', 'sync') },
+            audio: { def: 'off', url: 'audio', valid: oneOf('off', 'tone', 'ebu', 'glits', 'pink', 'stereo', 'sync') },
             freq: { def: 1000, url: 'freq', type: 'num', min: 20, max: 20000 },
             level: { def: -18, url: 'level', type: 'num', min: -60, max: 0 },
             channels: { def: 'lr', url: 'ch', valid: oneOf('lr', 'l', 'r', 'anti') },
@@ -28,7 +28,9 @@ class TestToolsApp {
             syncDuration: { def: 200, url: 'dur', type: 'num', min: 20, max: 2000 },
             syncOffset: { def: 0, url: 'offset', type: 'num', min: -2000, max: 2000 },
             syncFlash: { def: 'box', url: 'flash', valid: oneOf('box', 'screen') },
-            identIndicator: { def: 'corner', url: 'ind', valid: oneOf('off', 'corner', 'center') }
+            identIndicator: { def: 'corner', url: 'ind', valid: oneOf('off', 'corner', 'center') },
+            stereoSignal: { def: 3.5, url: 'stsig', type: 'num', min: 0.5, max: 30 },
+            stereoPause: { def: 0.5, url: 'stpause', type: 'num', min: 0, max: 10 }
         };
 
         this.urlParams = new URLSearchParams(window.location.search);
@@ -38,6 +40,7 @@ class TestToolsApp {
         this.audio = new AudioEngine();
         this.sync = new AVSyncOverlay(this.audio);
         this.identIndicator = new IdentIndicator(this.audio);
+        this.stereoTest = new StereoTestOverlay(this.audio);
         this.overlay = new Overlay();
 
         this.hints = {};
@@ -96,7 +99,7 @@ class TestToolsApp {
         this.saveSettings();
 
         if (['pattern', 'rp219Sub', 'fieldColor'].includes(key)) this.renderPattern();
-        if (['audio', 'freq', 'level', 'channels', 'syncPeriod', 'syncDuration'].includes(key)) this.applyAudio();
+        if (['audio', 'freq', 'level', 'channels', 'syncPeriod', 'syncDuration', 'stereoSignal', 'stereoPause'].includes(key)) this.applyAudio();
         if (key === 'pattern') this.renderPatternOptions();
         if (key === 'audio') this.updateControlsVisibility();
         this.overlayDirty = true;
@@ -161,7 +164,9 @@ class TestToolsApp {
             level: s.level,
             channels: s.channels,
             syncPeriod: s.syncPeriod,
-            syncDuration: duration
+            syncDuration: duration,
+            stereoSignal: s.stereoSignal,
+            stereoPause: s.stereoPause
         });
     }
 
@@ -310,13 +315,16 @@ class TestToolsApp {
 
         const syncActive = this.settings.audio === 'sync';
         const identActive = !!AudioEngine.IDENTS[this.settings.audio] && this.settings.identIndicator !== 'off';
-        if (syncActive || identActive || this.settings.clock || this.overlayDirty) {
+        const stereoActive = this.settings.audio === 'stereo';
+        if (syncActive || identActive || stereoActive || this.settings.clock || this.overlayDirty) {
             const ctx = this.overlayCtx;
             const { width: w, height: h } = this.overlayCanvas;
             ctx.clearRect(0, 0, w, h);
             if (syncActive) this.sync.draw(ctx, w, h, ts, this.frameMs, this.syncConfig());
             if (identActive) this.identIndicator.draw(ctx, w, h, ts, this.frameMs, this.settings);
+            if (stereoActive) this.stereoTest.draw(ctx, w, h, ts, this.frameMs, this.settings);
             const centerH = syncActive ? AVSyncOverlay.panelHeight(w, h)
+                : stereoActive ? StereoTestOverlay.panelSize(w, h).ph
                 : identActive ? IdentIndicator.centerSize(h, this.settings.identIndicator)
                 : null;
             this.overlay.draw(ctx, w, h, this.hints, this.settings, this.audio.describe(), centerH, this.logo);
@@ -476,6 +484,9 @@ class TestToolsApp {
             [[-6, '−6 dBFS'], [-9, '−9 dBFS'], [-12, '−12 dBFS'], [-18, '−18 dBFS (EBU R 68)'], [-20, '−20 dBFS (SMPTE RP 155)'], [-24, '−24 dBFS'], [-30, '−30 dBFS']],
             s.level, (l) => `${l} dBFS`);
         const periodOptions = this.withCurrent([1, 2, 3, 4, 5].map(p => [p, `${p} s`]), s.syncPeriod, (p) => `${p} s`);
+        const sec = (v) => `${String(v).replace('.', ',')} s`;
+        const stSigOptions = this.withCurrent([1, 2, 3.5, 5, 10].map(v => [v, sec(v)]), s.stereoSignal, sec);
+        const stPauseOptions = this.withCurrent([[0, 'brak'], ...[0.25, 0.5, 1, 2].map(v => [v, sec(v)])], s.stereoPause, sec);
         const durOptions = this.withCurrent(
             [[40, '40 ms (1 klatka 25p)'], [100, '100 ms'], [200, '200 ms'], [500, '500 ms'], [1000, '1 s']],
             s.syncDuration, (d) => `${d} ms`);
@@ -511,6 +522,7 @@ class TestToolsApp {
                     ['ebu', 'Identyfikacja EBU (Tech 3304)'],
                     ['glits', 'Identyfikacja GLITS (BBC)'],
                     ['pink', 'Szum różowy'],
+                    ['stereo', 'Automatyczny test stereo'],
                     ['sync', 'Synchronizacja A/V (piki + grafika)']
                 ], s.audio)}
             </label>
@@ -528,6 +540,13 @@ class TestToolsApp {
                 </label>
                 <div class="hint" id="offset-hint">Dodatnia wartość opóźnia grafikę względem dźwięku – np. dla głośnika Bluetooth.</div>
                 <label><input type="checkbox" id="mute-audio"> Wycisz (klawisz M)</label>
+            </div>
+
+            <div id="stereo-options">
+                <hr>
+                <strong>Test stereo</strong>
+                <label>Czas sygnału w kroku: ${this.selectHtml('stereo-signal', stSigOptions, s.stereoSignal)}</label>
+                <label>Przerwa między krokami: ${this.selectHtml('stereo-pause', stPauseOptions, s.stereoPause)}</label>
             </div>
 
             <div id="sync-options">
@@ -576,6 +595,8 @@ class TestToolsApp {
         bind('sync-flash', 'syncFlash');
         bind('sync-offset', 'syncOffset', 'input');
         bind('ident-indicator', 'identIndicator');
+        bind('stereo-signal', 'stereoSignal');
+        bind('stereo-pause', 'stereoPause');
 
         document.getElementById('mute-audio').addEventListener('change', (e) => this.audio.setMuted(e.target.checked));
         document.getElementById('fullscreen-button').addEventListener('click', () => this.toggleFullscreen());
@@ -603,12 +624,14 @@ class TestToolsApp {
         const show = (id, visible) => { document.getElementById(id).style.display = visible ? '' : 'none'; };
         show('audio-options', mode !== 'off');
         show('sync-options', mode === 'sync');
+        show('stereo-options', mode === 'stereo');
         show('freq-label', mode !== 'pink');
         const isIdent = !!AudioEngine.IDENTS[mode];
-        show('channels-label', !isIdent);
+        show('channels-label', !isIdent && mode !== 'stereo');
         show('indicator-label', isIdent);
-        show('offset-label', isIdent || mode === 'sync');
-        show('offset-hint', isIdent || mode === 'sync');
+        const timed = isIdent || mode === 'sync' || mode === 'stereo';
+        show('offset-label', timed);
+        show('offset-hint', timed);
     }
 
     updateStats() {
