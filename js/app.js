@@ -461,7 +461,7 @@ class TestToolsApp {
         const s = this.settings;
         const hz = (f) => f >= 1000 ? `${f / 1000} kHz` : `${f} Hz`;
         const freqOptions = this.withCurrent(
-            [40, 100, 440, 997, 1000, 3150, 10000, 15000].map(f => [f, hz(f) + (f === 997 ? ' (cyfrowy)' : f === 1000 ? ' (EBU R 68)' : '')]),
+            [40, 100, 440, 442, 997, 1000, 3150, 10000, 15000].map(f => [f, hz(f) + (f === 997 ? ' (cyfrowy)' : f === 1000 ? ' (EBU R 68)' : '')]),
             s.freq, hz);
         const levelOptions = this.withCurrent(
             [[-6, '−6 dBFS'], [-9, '−9 dBFS'], [-12, '−12 dBFS'], [-18, '−18 dBFS (EBU R 68)'], [-20, '−20 dBFS (SMPTE RP 155)'], [-24, '−24 dBFS'], [-30, '−30 dBFS']],
