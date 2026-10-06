@@ -171,6 +171,10 @@ class TestToolsApp {
 
     bindEvents() {
         window.addEventListener('resize', () => this.resize());
+        // iPadOS potrafi zmienić obszar strony bez zdarzenia resize (pasek statusu, obrót)
+        if (window.ResizeObserver) {
+            new ResizeObserver(() => this.resize()).observe(this.patternCanvas);
+        }
 
         // Odblokowanie dźwięku przy pierwszej interakcji (polityka autoodtwarzania)
         const unlock = () => {
@@ -275,8 +279,13 @@ class TestToolsApp {
     // -------------------------------------------------------------------------
     resize() {
         this.dpr = window.devicePixelRatio || 1;
-        const w = Math.round(window.innerWidth * this.dpr);
-        const h = Math.round(window.innerHeight * this.dpr);
+        // Rozmiar z faktycznie zajmowanego obszaru, nie z window.innerHeight (patrz common.css)
+        const rect = this.patternCanvas.getBoundingClientRect();
+        const w = Math.round(rect.width * this.dpr);
+        const h = Math.round(rect.height * this.dpr);
+        if (!w || !h) return;
+        if (w === this.patternCanvas.width && h === this.patternCanvas.height && this.patternDrawn) return;
+        this.patternDrawn = true;
         for (const canvas of [this.patternCanvas, this.overlayCanvas]) {
             canvas.width = w;
             canvas.height = h;

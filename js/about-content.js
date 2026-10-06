@@ -4,7 +4,7 @@
 // =============================================================================
 
 window.ABOUT_CONTENT = {
-  version: '1.0.1',
+  version: '1.0.2',
   about: {
     description: 'Przeglądarkowy generator plansz testowych i sygnałów fonicznych dla realizacji wizji i dźwięku. Może służyć jako źródło w OBS / vMix (Browser Source) lub działać na fizycznym urządzeniu (np. iPadzie) filmowanym przez kamerę. Zawiera generator sygnału synchronizacji obrazu i dźwięku (lip-sync).',
     copyright: '© Maksymilian Motyka 2026'
@@ -58,7 +58,8 @@ window.ABOUT_CONTENT = {
       version: '1.0.1',
       items: [
         '(1.0.0) Pierwsze wydanie: 7 plansz testowych, identyfikator źródła z tekstem i/lub logo, generator tonów kontrolnych i identyfikacji kanałów (z obrotowym wskaźnikiem przerw), sygnał synchronizacji obrazu i dźwięku.',
-        'Poprawa drobnych usterek, dodanie częstotliwości tonu 442 Hz.'
+        'Poprawa drobnych usterek, dodanie częstotliwości tonu 442 Hz.',
+        'Poprawienie wyświetlania aplikacji na iOS'
       ]
     }
   ]
