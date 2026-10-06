@@ -1,0 +1,269 @@
+/* =============================================================================
+   STYLE APLIKACJI
+   ============================================================================= */
+
+html, body {
+    margin: 0;
+    height: 100%;
+    overflow: hidden;
+    background-color: #000;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+}
+
+/* Plansza i nakładki - pełny ekran, rozdzielczość fizyczna (devicePixelRatio) */
+#pattern,
+#overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: block;
+}
+
+/* Bezczynność - ukryty kursor i przycisk opcji (czysty obraz dla kamery) */
+body.idle,
+body.idle #pattern,
+body.idle #overlay {
+    cursor: none;
+}
+
+#controls-toggle {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background-color: rgba(0,0,0,0.7);
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    z-index: 1001;
+    transition: background-color 0.3s ease, opacity 0.5s ease;
+}
+
+#controls-toggle:hover {
+    background-color: rgba(0,0,0,0.9);
+}
+
+body.idle #controls-toggle {
+    opacity: 0;
+    pointer-events: none;
+}
+
+#controls {
+    position: fixed;
+    top: 50px;
+    right: 10px;
+    width: 300px;
+    max-width: calc(100vw - 50px);
+    background-color: rgba(0,0,0,0.9);
+    padding: 15px;
+    border-radius: 5px;
+    color: white;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    z-index: 1000;
+    max-height: calc(100vh - 80px);
+    overflow-y: auto;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+#controls.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-10px);
+}
+
+#controls label {
+    display: block;
+    margin: 6px 0;
+    cursor: pointer;
+}
+
+#controls select,
+#controls input[type="text"],
+#controls input[type="number"] {
+    box-sizing: border-box;
+    background-color: rgba(255,255,255,0.1);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.3);
+    padding: 5px;
+    border-radius: 3px;
+    font-size: 14px;
+    width: 100%;
+    margin-top: 4px;
+}
+
+#controls select option {
+    background-color: #333;
+    color: white;
+}
+
+#controls hr {
+    border: none;
+    border-top: 1px solid rgba(255,255,255,0.3);
+    margin: 10px 0;
+}
+
+#controls .hint,
+#stats {
+    font-size: 12px;
+    color: rgba(255,255,255,0.65);
+    line-height: 1.5;
+}
+
+#controls .buttons {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+#controls .buttons button {
+    flex: 1;
+    padding: 8px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+/* Podpowiedź o zablokowanym dźwięku (polityka autoodtwarzania) */
+#audio-hint {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    background-color: rgba(200, 30, 30, 0.9);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 5px;
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    z-index: 1000;
+    transition: opacity 0.3s ease;
+}
+
+#audio-hint.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+#toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background-color: rgba(0,0,0,0.85);
+    color: white;
+    padding: 10px 18px;
+    border-radius: 5px;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    z-index: 1002;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+#toast.visible {
+    opacity: 1;
+    transform: translateX(-50%);
+}
+
+/* Okno "O projekcie" */
+#about-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    backdrop-filter: blur(5px);
+    -webkit-user-select: text;
+    user-select: text;
+}
+
+.about-modal {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    color: white;
+    padding: 30px;
+    border-radius: 15px;
+    max-width: 520px;
+    margin: 16px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    font-family: system-ui, -apple-system, sans-serif;
+    line-height: 1.6;
+}
+
+.about-modal h2 {
+    margin-top: 0;
+    text-align: center;
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.about-modal h2 img {
+    width: 32px;
+    height: 32px;
+}
+
+.about-modal h3 {
+    font-size: 18px;
+    margin-top: 20px;
+    border-bottom: 2px solid rgba(255,255,255,0.3);
+    padding-bottom: 5px;
+}
+
+.about-modal ul {
+    line-height: 1.8;
+}
+
+.about-modal .version {
+    text-align: center;
+    margin: 15px 0;
+    padding: 10px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 8px;
+}
+
+.about-modal .small {
+    font-size: 14px;
+}
+
+.about-modal .center {
+    text-align: center;
+}
+
+#close-about {
+    margin-top: 15px;
+    padding: 12px 30px;
+    font-size: 16px;
+    background-color: rgba(255,255,255,0.2);
+    color: white;
+    border: 2px solid white;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#close-about:hover {
+    background-color: rgba(255,255,255,0.3);
+}
+
+/* Tryb kiosk (?kiosk=1) - panel opcji dostępny pod klawiszem "O" */
+body.kiosk #controls-toggle,
+body.kiosk #audio-hint {
+    display: none;
+}
+
+body.kiosk #controls {
+    top: 10px;
+}

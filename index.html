@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Generator plansz testowych i sygnałów fonicznych dla realizacji wizji i dźwięku - pasy EBU / SMPTE, plansza kontrolna, ton 1 kHz, synchronizacja A/V">
+    <title>mTestTools</title>
+
+    <!-- PWA Meta Tags -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="mTestTools">
+    <meta name="theme-color" content="#000000">
+
+    <!-- Manifest dla PWA -->
+    <link rel="manifest" href="manifest.json">
+
+    <!-- Favicons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png">
+    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+
+    <link rel="stylesheet" href="css/common.css">
+</head>
+<body>
+    <!-- Plansza (statyczna) i nakładki (ident, zegar, synchronizacja A/V) -->
+    <canvas id="pattern"></canvas>
+    <canvas id="overlay"></canvas>
+
+    <!-- Panel kontrolny -->
+    <div id="controls" class="hidden"></div>
+
+    <div id="audio-hint" class="hidden">🔇 Dotknij lub kliknij, aby włączyć dźwięk</div>
+
+    <!-- Moduły JavaScript -->
+    <script src="js/about-content.js"></script>
+    <script src="js/patterns/pattern-utils.js"></script>
+    <script src="js/patterns/ebu-bars.js"></script>
+    <script src="js/patterns/smpte-rp219.js"></script>
+    <script src="js/patterns/test-card.js"></script>
+    <script src="js/patterns/geometry.js"></script>
+    <script src="js/patterns/grayscale.js"></script>
+    <script src="js/patterns/full-field.js"></script>
+    <script src="js/audio-engine.js"></script>
+    <script src="js/av-sync.js"></script>
+    <script src="js/ident-indicator.js"></script>
+    <script src="js/overlay.js"></script>
+    <script src="js/app.js"></script>
+
+    <!-- Inicjalizacja aplikacji -->
+    <script>
+        let app;
+
+        window.onload = async function() {
+            app = new TestToolsApp();
+            await app.init();
+        };
+
+        // Service Worker - działanie offline (patrz sw.js)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch((err) => {
+                    console.warn('Nie udało się zarejestrować Service Workera:', err);
+                });
+            });
+        }
+    </script>
+</body>
+</html>
