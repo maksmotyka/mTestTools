@@ -4,7 +4,7 @@
 // =============================================================================
 
 window.ABOUT_CONTENT = {
-  version: '1.1.0',
+  version: '1.1.1',
   about: {
     description: 'Przeglądarkowy generator plansz testowych i sygnałów fonicznych dla realizacji wizji i dźwięku. Może służyć jako źródło w OBS / vMix (Browser Source) lub działać na fizycznym urządzeniu (np. iPadzie) filmowanym przez kamerę. Zawiera generator sygnału synchronizacji obrazu i dźwięku (lip-sync).',
     copyright: '© Maksymilian Motyka 2026'
@@ -56,9 +56,10 @@ window.ABOUT_CONTENT = {
   ],
   changelog: [
     {
-      version: '1.1.0',
+      version: '1.1.1',
       items: [
         'Dodanie nowego testu audio: Automatyczny test stereo z miernikami poziomu (szczyt i RMS), korelacji i goniometrem',
+        'Drobne poprawki'
       ]
     },
     {

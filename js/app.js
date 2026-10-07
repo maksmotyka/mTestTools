@@ -530,7 +530,7 @@ class TestToolsApp {
                 <label id="freq-label">Częstotliwość: ${this.selectHtml('audio-freq', freqOptions, s.freq)}</label>
                 <label>Poziom: ${this.selectHtml('audio-level', levelOptions, s.level)}</label>
                 <label id="channels-label">Kanały: ${this.selectHtml('audio-channels', [
-                    ['lr', 'L + P'], ['l', 'Tylko lewy'], ['r', 'Tylko prawy'], ['anti', 'L + P w antyfazie']
+                    ['lr', 'L + P'], ['l', 'Tylko lewy'], ['r', 'Tylko prawy'], ['anti', 'L + P w przeciwfazie']
                 ], s.channels)}</label>
                 <label id="indicator-label">Wskaźnik identyfikacji: ${this.selectHtml('ident-indicator', [
                     ['corner', 'W rogu'], ['center', 'Na środku'], ['off', 'Wyłączony']
