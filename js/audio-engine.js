@@ -356,7 +356,7 @@ class AudioEngine {
         const c = this.config;
         const f = c.freq >= 1000 && c.freq % 1000 === 0 ? `${c.freq / 1000} kHz` : `${c.freq} Hz`;
         const lvl = `${c.level < 0 ? '−' : ''}${Math.abs(c.level)} dBFS`;
-        const ch = { lr: 'L+R', l: 'tylko L', r: 'tylko P', anti: 'L+R antyfaza' }[c.channels];
+        const ch = { lr: 'L+R', l: 'tylko L', r: 'tylko P', anti: 'L+R przeciwfaza' }[c.channels];
         switch (c.mode) {
             case 'tone': return `${f}  ${lvl}  ${ch}`;
             case 'ebu': return `EBU IDENT  ${f}  ${lvl}`;
