@@ -6,6 +6,8 @@ Przeglądarkowy generator plansz testowych i sygnałów fonicznych dla realizacj
 
 Aplikacja nie wymaga instalacji ani serwera – to zwykła strona WWW (HTML + JavaScript), działająca również offline (PWA).
 
+## [▶ Uruchom mTestTools](https://testtools.maksmotyka.xyz/)
+
 ## Plansze testowe
 
 | Plansza | Parametr | Do czego służy |
@@ -225,6 +227,9 @@ Wersja pamięci podręcznej Service Workera pochodzi z pola `version` w `js/abou
 
 ## Ograniczenia
 Narzędzie nie zastępuje sprzętowego generatora sygnałów wzorcowych: przeglądarka pracuje w 8-bitowym RGB, może stosować zarządzanie kolorem systemu, a obraz przechodzi przez kompozytor systemu operacyjnego. Do kontroli toru, identyfikacji źródeł, ustawienia kamer i pomiarów synchronizacji z dokładnością do klatki sprawdza się jednak bardzo dobrze.
+
+## Kontakt
+Uwagi, zgłoszenia błędów i pomysły: [hello@maksmotyka.xyz](mailto:hello@maksmotyka.xyz)
 
 ## Licencja
 MIT – patrz [LICENSE](LICENSE).

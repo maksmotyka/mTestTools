@@ -245,6 +245,11 @@ body.idle #controls-toggle {
     text-align: center;
 }
 
+.about-modal a {
+    color: white;
+    text-decoration: underline;
+}
+
 #close-about {
     margin-top: 15px;
     padding: 12px 30px;

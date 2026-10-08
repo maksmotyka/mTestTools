@@ -694,7 +694,7 @@ class TestToolsApp {
         const entry = c ? c.changelog.find(e => e.version === this.VERSION) : null;
         const changelogSection = entry ? h3(`Co nowego w wersji ${entry.version}`) + li(entry.items) : '';
         const patternsSection = c ? li(c.patterns.map(p => `<strong>${p.name}</strong> – ${p.description}`)) : '';
-        const featuresSection = c ? li(c.features.map(f => f.replace(/\?(\S+=)/g, '<code>?$1</code>'))) : '';
+        const featuresSection = c ? li(c.features.map(f => f.replace(/\?(\w+=[^\s,)]*)/g, '<code>?$1</code>'))) : '';
         const legalSection = c ? c.legal.map(p => `<p class="small">${p}</p>`).join('') : '';
 
         overlay.innerHTML = `
@@ -708,6 +708,7 @@ class TestToolsApp {
                 ${patternsSection}
                 ${h3('Funkcje')}
                 ${featuresSection}
+                ${c && c.about.contact ? h3('Kontakt') + `<p>Uwagi, błędy, pomysły: <a href="mailto:${c.about.contact}">${c.about.contact}</a></p>` : ''}
                 ${h3('Prawa autorskie i licencja')}
                 ${legalSection}
                 <p class="small center">${c ? c.about.copyright : ''}</p>

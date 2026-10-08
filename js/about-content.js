@@ -4,10 +4,11 @@
 // =============================================================================
 
 window.ABOUT_CONTENT = {
-  version: '1.1.1',
+  version: '1.2.0',
   about: {
     description: 'Przeglądarkowy generator plansz testowych i sygnałów fonicznych dla realizacji wizji i dźwięku. Może służyć jako źródło w OBS / vMix (Browser Source) lub działać na fizycznym urządzeniu (np. iPadzie) filmowanym przez kamerę. Zawiera generator sygnału synchronizacji obrazu i dźwięku (lip-sync).',
-    copyright: '© Maksymilian Motyka 2026'
+    copyright: '© Maksymilian Motyka 2026',
+    contact: 'hello@maksmotyka.xyz'
   },
   patterns: [
     {
@@ -55,6 +56,13 @@ window.ABOUT_CONTENT = {
     'Projekt nie jest oficjalnie powiązany z EBU, SMPTE, ITU, Philips ani innymi podmiotami. Wszelkie znaki towarowe należą do ich prawowitych właścicieli.'
   ],
   changelog: [
+    {
+      version: '1.2.0',
+      items: [
+        'Drobne poprawki i aktualizacja treści okna "O projekcie"',
+        'Umieszczenie aplikacji w docelowej domenie'
+      ]
+    },
     {
       version: '1.1.1',
       items: [
